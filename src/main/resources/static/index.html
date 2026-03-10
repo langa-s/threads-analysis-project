@@ -23,7 +23,28 @@
         <h1>Threads Connection Finder</h1>
         <div id="cy"></div>
         <br>
-        <button onclick="findPath()">Find Path: Alice to Frank</button>
+
+        <label for="startNode">Start:</label>
+        <select id="startNode">
+            <option value="Alice">Alice</option>
+            <option value="Bob">Bob</option>
+            <option value="Charlie">Charlie</option>
+            <option value="Dan">Dan</option>
+            <option value="Eve">Eve</option>
+            <option value="Frank">Frank</option>
+        </select>
+
+        <label for="endNode">End:</label>
+        <select id="endNode">
+            <option value="Frank">Frank</option>
+            <option value="Alice">Alice</option>
+            <option value="Bob">Bob</option>
+            <option value="Charlie">Charlie</option>
+            <option value="Dan">Dan</option>
+            <option value="Eve">Eve</option>
+        </select>
+
+        <button onclick="findDynamicPath()">Find Path</button>
         <p id="result">Click the button to see the shortest path logic.</p>
 
         <script>
@@ -64,28 +85,41 @@
                 ],
                 layout: { name: 'grid', rows: 2 }
                 });
-
-            async function findPath() {
+            
+            async function findDynamicPath() {
+                const start = document.getElementById('startNode').value;
+                const end = document.getElementById('endNode').value;
                 const resultElement = document.getElementById('result');
-                resultElement.innerText = "Querying Dijkstra Algorithm...";
+
+                //Clear previous highlights
+
+                cy.elements().removeClass('highlighted');
+                cy.nodes().style('background-color', '#007bff');
 
                 try {
-                    // Matches getPath(String start, String end) in your Java code
-                    const response = await fetch('http://localhost:8080/api/path?start=Alice&end=Frank');
-                    
-                    if (!response.ok) throw new Error("Path not found");
+                    //use backticks (`) and ${} to insert your variables into the URL 
+                    const response = await fetch(`/api/path?start=${start}&end=${end}`);
 
-                    const path = await response.json(); 
+                    if (!response.ok) throw new Error("No path exists between these users.");
+
+                    const path = await response.json();
+
+                    if (path.length == 0) {
+                        resultElement.innerText = `No connection found from ${start} to ${end}.`;
+                        return;
+                    }
+
                     resultElement.innerText = "Shortest Path: " + path.join(" --> ");
-                    
-                    // Optional: Highlight the path in the UI
-                    path.forEach(nodeId => {
-                        cy.nodes(`[id="${nodeId}"]`).style('background-color', 'cyan');
-                    });
-                } catch (error) {
-                    resultElement.innerText = "Error: Check if your Spring Backend is running on port 8080!";
-                }
-            } 
+
+                    //Highlight logic
+                    path.forEach(nodeId => { 
+                        cy.$(`#${nodeId}`).style(`background-color`, 'cyan'); } );
+                    }
+
+                    catch (error) {
+                        resultElement.innerText = error.message;
+                    }
+            }
         </script>
     </body>
 </html>
